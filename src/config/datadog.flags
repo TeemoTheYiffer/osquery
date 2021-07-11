@@ -1,0 +1,4 @@
+--config_path=/var/osquery/osquery.conf
+--host_identifier=hostname
+--logger_plugin=filesystem
+--verbose=true
