@@ -136,10 +136,10 @@ def osquery_install(version):
                 password=getpass.getpass("Enter your e-mail password\n") # Only for testing; Leverage a secrets vault (ie AWS SecretsManager)
                 error_email(sender="joeaguirre0@gmail.com", receiver="joe_aguirre@intuit.com", password=password, smtp_server="smtp.gmail.com", port=465, subject="ERROR: osquery.conf misconfigured!", error=test.stderr)
 
-                # To fix the faulty config file, this downloads a pre-tuned Palantir config file but ideally a Datadog-specific config file should be stored in a GitHub & pulled
-                palantir_config = "https://raw.githubusercontent.com/palantir/osquery-configuration/89c2ae5c7fcad242696e6febb16c05abb0375155/Classic/Endpoints/MacOS/osquery.conf"
-                subprocess.run(['curl','-o', 'plantir.conf', palantir_config], capture_output=True, text=True)
-                subprocess.run(['sudo', 'cp', 'plantir.conf', '/var/osquery/osquery.conf'], capture_output=True, text=True)
+                # To fix the faulty config file, this downloads the Datadog config file from GitHub & replaces the faulty one
+                github_config = "https://raw.githubusercontent.com/TeemoTheYiffer/osquery/main/src/config/datadog.conf"
+                subprocess.run(['curl','-o', 'datadog.conf', github_config], capture_output=True, text=True)
+                subprocess.run(['sudo', 'cp', 'datadog.conf', '/var/osquery/osquery.conf'], capture_output=True, text=True)
                 return
 
             # Load LaunchDaemon
