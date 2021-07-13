@@ -2,5 +2,4 @@
 --config_check=true
 --host_identifier=hostname
 --logger_plugin=filesystem
---logger_mode=644
 --verbose=true
