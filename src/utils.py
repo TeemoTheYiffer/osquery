@@ -13,6 +13,9 @@ from pylogrus import PyLogrus, JsonFormatter
 import logging
 import platform
 
+# Current Directory
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
 class LogHandler:
     """
     Format logging to be easily searchable via Splunk
@@ -44,7 +47,7 @@ class LogHandler:
     def __setlevel(self, log_level):
         self.logger.setLevel(log_level)
 
-def error_email(sender, receiver, password, smtp_server, port, subject, error=None):
+def email(sender, receiver, password, smtp_server, port, subject, error="N/A", detection="N/A"):
     import datetime
     import socket
     import getpass
@@ -72,7 +75,18 @@ def error_email(sender, receiver, password, smtp_server, port, subject, error=No
         Endpoint: {host_name}<br>
         Operating System: {OS}<br>
         Currently Logged-in User: {logged_user}<br>
-        Error (If Applicable): {error}<br>
+        Detection Event (If Applicable): <br>
+        <div class="box box-default">
+            <code>
+                <pre>{{{detection}}}</pre>
+            </code>
+        </div>
+        Error (If Applicable): <br>
+        <div class="box box-default">
+            <code>
+                <pre>{{{error}}}</pre>
+            </code>
+        </div>
         </p>
     </body>
     </html>
@@ -126,24 +140,30 @@ def osquery_install(version):
             subprocess.run(['sudo','installer', '-pkg', f"osquery-{version}.pkg", '-target', '/'], capture_output=True, text=True)
 
             # Configure
-            subprocess.run(['sudo', 'cp', 'datadog.conf', '/var/osquery/osquery.conf'], capture_output=True, text=True)
-            subprocess.run(['sudo', 'cp', 'datadog.flags', '/var/osquery/osquery.flags'], capture_output=True, text=True)
+            subprocess.run(['sudo', 'cp', f'{dir_path}/config/datadog.conf', '/var/osquery/osquery.conf'], capture_output=True, text=True)
+            subprocess.run(['sudo', 'cp', f'{dir_path}/config/datadog.flags', '/var/osquery/osquery.flags'], capture_output=True, text=True)
 
             # Smoke test configuration file (just to be sure)
             test = subprocess.run(['osqueryi', '--config_path', '/var/osquery/osquery.conf', '--config_check'], capture_output=True, text=True)
             if test.stderr:
-                import getpass
-                password=getpass.getpass("Enter your e-mail password\n") # Only for testing; Leverage a secrets vault (ie AWS SecretsManager)
-                error_email(sender="joeaguirre0@gmail.com", receiver="joe_aguirre@intuit.com", password=password, smtp_server="smtp.gmail.com", port=465, subject="ERROR: osquery.conf misconfigured!", error=test.stderr)
+                log.error(f"Osquery.conf Error - Attempting GitHub Pull & Replace Fix - Error_Msg={test.stderr}")
 
-                # To fix the faulty config file, this downloads the Datadog config file from GitHub & replaces the faulty one
+                # To attempt to fix the faulty config file, this downloads the config file from GitHub & replaces the faulty one
                 github_config = "https://raw.githubusercontent.com/TeemoTheYiffer/osquery/main/src/config/datadog.conf"
-                subprocess.run(['curl','-o', 'datadog.conf', github_config], capture_output=True, text=True)
-                subprocess.run(['sudo', 'cp', 'datadog.conf', '/var/osquery/osquery.conf'], capture_output=True, text=True)
+                subprocess.run(['curl','-o', f'{dir_path}/config/datadog.conf', github_config], capture_output=True, text=True)
+                subprocess.run(['sudo', 'cp', f'{dir_path}/config/datadog.conf', '/var/osquery/osquery.conf'], capture_output=True, text=True)
+
+                test = subprocess.run(['osqueryi', '--config_path', '/var/osquery/osquery.conf', '--config_check'], capture_output=True, text=True)
+                if test.stderr:  
+                    # It re-ran the test and if it failed a 2nd time, then an e-mail is sent out             
+                    import getpass
+                    password=getpass.getpass("Enter your e-mail password\n") # Only for testing; Leverage a secrets vault (ie AWS SecretsManager)
+                    email(sender="joeaguirre0@gmail.com", receiver="joe_aguirre@intuit.com", password=password, smtp_server="smtp.gmail.com", port=465, subject="ERROR: osquery.conf misconfigured!", error=test.stderr)
+
                 return
 
             # Load LaunchDaemon
-            subprocess.run(['sudo', 'cp', 'com.datadog.osqueryd.plist', '/Library/LaunchDaemons'], capture_output=True, text=True)
+            subprocess.run(['sudo', 'cp', f'{dir_path}/config/com.datadog.osqueryd.plist', '/Library/LaunchDaemons'], capture_output=True, text=True)
             subprocess.run(['sudo', 'launchctl', 'load', '/Library/LaunchDaemons/com.datadog.osqueryd.plist',], capture_output=True, text=True)
 
 
