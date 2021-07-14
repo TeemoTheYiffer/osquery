@@ -8,20 +8,37 @@ The scripts do the following:
 * Fix the osquery configuration if incorrect
 * Create an osquery configuration that will detect the presence of a persistent attacker
 * Send an email if a persistent attacker is detected
-* Setup a Datadog trial and send osquery logs to Datadog
-* Use Datadog to send alerts to Corp IT Security
 
 | Link | Purpose |
 |---|---|
 | [Osquery Docs](https://osquery.readthedocs.io/en/stable/) | Documentation for Osquery |
 | [Osquery GitHub](https://github.com/osquery/osquery)  | GitHub for Osquery  |
 | [Osquery Schema](https://osquery.io/schema/4.9.0/)  | SQL Schema for Osquery |
-| [Palantir Github](https://github.com/palantir/osquery-configuration/tree/89c2ae5c7fcad242696e6febb16c05abb0375155) | Example Osquery GitHub by Palantir  |
+
+# How to Use
+NOTE: Before using this, please change the e-mail address from `joeaguirre0@gmail.com` and `joe_aguirre@intuit.com` to two correct e-mail addresses in the following files:
+* `intrustiondetection.py`: Line 38
+* `utils.py`: Line 165
+* `osquery.py`: Line 39 & 49
+
+__Also change the same files abobe in both `osquery.app` and `intrustiondetection.app` as well!__
+
+1. Unzip `osquery.zip` and `intrusiondetection.zip`
+2. Run `osquery.app/Contents/MacOS/osquery` script as it will ask you for your e-mail & sudo password
+    - Ideally you would want to utilize a safe secrets manager or JAMF for both your e-mail password & JAMF can run sudo
+3. That's it! 
 
 # Deployment Scope
 Targets all physical Mac endpoints. The python script is capable of handling end-to-end deployment, including uninstallation if required. Ideally however, JAMF would be leveraged to build a PKG/DMG and handle policy deployments
 
 # Configuration
+NOTE: Before using this, please change the e-mail address from `????????@gmail.com` and `????????@intuit.com` to two correct e-mail addresses in the following files:
+* `intrustiondetection.py`: Line 38
+* `utils.py`: Line 165
+* `osquery.py`: Line 39 & 49
+
+__Also change the same files abobe in both `osquery.app` and `intrustiondetection.app` as well!__
+
 The following configuration is modifiable and located within [Datadog.conf](config/datadog.conf). 
 
 **NOTE: Any changes made to `datadog.conf` would be reflected in production, as `utils.py` pulls the configuration.**
@@ -71,7 +88,8 @@ Packs
     - `pip install -r requirements.txt`
 10. Install latest version of `py2app`.
     - `pip install py2app`
-11. Package your python app with py2app within your venv.
-    - `python setup.py py2app`
-12. This creates a `dist` folder which contains your `main.app`. This app contains all required libraries, including a virtualized python. You would want to test the `main.app` by double clicking it and running it. If you have issues, try running the `main` shell script, path: `main.app/Contents/MacOS/main`, within the `main.app` itself to get a console output and see any error.
+11. Package your python apps with py2app within your venv.
+    - `python setup.py py2app` for the main `osquery.app` deployment
+    - `python intrusion_setup.py py2app` for the Intrusion Detection `intrusiondetection.app` app
+12. This creates a `dist` folder which contains your `osquery.app`. This app contains all required libraries, including a virtualized python. You would want to test the `osquery.app` by double clicking it and running it. If you have issues, try running the `osquery` shell script, path: `osquery.app/Contents/MacOS/osquery`, within the `osquery.app` itself to get a console output and see any error. You can now modify the original scripts under `osquery.app/Contents/MacOS/Resources` to retrofit the app.
 
