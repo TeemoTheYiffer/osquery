@@ -2,7 +2,7 @@
 ##* INFORMATION
 ##*===============================================
 # Script Version = 1.0.0
-# Script Date = 7/9/2021
+# Script Date = 7/13/2021
 # Script Author = Joe Aguirre
 # Description = Utilities script
 ##*===============================================
@@ -114,8 +114,14 @@ def service_check(service_name):
         runner = subprocess.run(['launchctl','print',f'system/{service_name}'], capture_output=True, text=True)
         if "state = running" in runner.stdout:
             return True
+        elif "state = pending" in runner.stdout:
+            return True
+        elif "state = spawned" in runner.stdout:
+            return True
         else:
+            log.info(f"{service_name} Error: {runner.stderr}")
             # Checks for service in User domain if not found in System domain
+            log.info("Checking the User Domain...")
             runner = subprocess.run(['launchctl','print',f'gui/{int(os.geteuid())}/{service_name}'], capture_output=True, text=True)
             if "state = running" in runner.stdout:
                 return True
@@ -156,16 +162,15 @@ def osquery_install(version):
                 test = subprocess.run(['osqueryi', '--config_path', '/var/osquery/osquery.conf', '--config_check'], capture_output=True, text=True)
                 if test.stderr:  
                     # It re-ran the test and if it failed a 2nd time, then an e-mail is sent out             
-                    import getpass
-                    password=getpass.getpass("Enter your e-mail password\n") # Only for testing; Leverage a secrets vault (ie AWS SecretsManager)
-                    email(sender="joeaguirre0@gmail.com", receiver="joe_aguirre@intuit.com", password=password, smtp_server="smtp.gmail.com", port=465, subject="ERROR: osquery.conf misconfigured!", error=test.stderr)
-
+                    email(sender="????????@gmail.com", receiver="????????@intuit.com", password=os.environ['EMAIL_PASS'], smtp_server="smtp.gmail.com", port=465, subject="ERROR: osquery.conf misconfigured!", error=test.stderr)
                 return
 
             # Load LaunchDaemon
             subprocess.run(['sudo', 'cp', f'{dir_path}/config/com.datadog.osqueryd.plist', '/Library/LaunchDaemons'], capture_output=True, text=True)
             subprocess.run(['sudo', 'launchctl', 'load', '/Library/LaunchDaemons/com.datadog.osqueryd.plist',], capture_output=True, text=True)
 
+            # Clean Up
+            subprocess.run(['sudo', 'rm', f"{dir_path}/osquery-{version}.pkg"], capture_output=True, text=True)
 
         except Exception as e:
             log.error(f"osquery_install - MacOS Error - Error_Msg={e}")
@@ -187,6 +192,22 @@ def osquery_uninstall():
     subprocess.run(['sudo', 'rm', '-rf', '/private/var/osquery'], capture_output=True, text=True)
     subprocess.run(['sudo', 'rm', '-rf', '/usr/local/bin/osquery*'], capture_output=True, text=True)
     subprocess.run(['sudo', 'pkgutil', '--forget', 'com.datadog.osquery'], capture_output=True, text=True)
+
+def intrustionapp_install():
+    # Deploys Intrusion Detection app
+    subprocess.run(['sudo', 'cp', f'{dir_path}/config/com.intuit.intrusiondetection.plist', '/Library/LaunchDaemons'], capture_output=True, text=True)
+    subprocess.run(['sudo', 'cp', '-R', f'{dir_path}/intrusiondetection.app', '/usr/local/bin/'], capture_output=True, text=True)
+    subprocess.run(['sudo', 'chown', 'root:wheel', '/Library/LaunchDaemons/com.intuit.intrusiondetection.plist',], capture_output=True, text=True)
+    subprocess.run(['sudo', 'launchctl', 'load', '/Library/LaunchDaemons/com.intuit.intrusiondetection.plist',], capture_output=True, text=True)
+
+def intrustionapp_uninstall():
+    # Unload and remove LaunchDaemon
+    subprocess.run(['sudo', 'launchctl', 'unload', '/Library/LaunchDaemons/com.intuit.intrusiondetection.plist',], capture_output=True, text=True)
+    subprocess.run(['sudo', 'rm', '/Library/LaunchDaemons/com.intuit.intrusiondetection.plist'], capture_output=True, text=True)
+
+    # Remove files/directories created by osquery installer pkg
+    subprocess.run(['sudo', 'rm', '-rf', '/usr/local/bin/intrusiondetection.app'], capture_output=True, text=True)
+    subprocess.run(['sudo', 'pkgutil', '--forget', 'com.intuit.intrusiondetection'], capture_output=True, text=True)
 
 def process_check(process_name):
     """Process existence check for executable and OS."""
