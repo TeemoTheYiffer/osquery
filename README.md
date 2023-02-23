@@ -16,7 +16,7 @@ The scripts do the following:
 | [Osquery Schema](https://osquery.io/schema/4.9.0/)  | SQL Schema for Osquery |
 
 # How to Use
-NOTE: Before using this, please change the e-mail address from `joeaguirre0@gmail.com` and `joe_aguirre@intuit.com` to two correct e-mail addresses in the following files:
+NOTE: Before using this, please change the e-mail address from `joeaguirre0@gmail.com` and `joe_aguirre@company.com` to two correct e-mail addresses in the following files:
 * `intrustiondetection.py`: Line 38
 * `utils.py`: Line 165
 * `osquery.py`: Line 39 & 49
@@ -32,7 +32,7 @@ __Also change the same files abobe in both `osquery.app` and `intrustiondetectio
 Targets all physical Mac endpoints. The python script is capable of handling end-to-end deployment, including uninstallation if required. Ideally however, JAMF would be leveraged to build a PKG/DMG and handle policy deployments
 
 # Configuration
-NOTE: Before using this, please change the e-mail address from `????????@gmail.com` and `????????@intuit.com` to two correct e-mail addresses in the following files:
+NOTE: Before using this, please change the e-mail address from `????????@gmail.com` and `????????@company.com` to two correct e-mail addresses in the following files:
 * `intrustiondetection.py`: Line 38
 * `utils.py`: Line 165
 * `osquery.py`: Line 39 & 49
@@ -84,7 +84,7 @@ Packs
     - `python -m venv <my_env_name>`
 8. Initialize your virtual environment (Verify you're in via `which python`).
     - `source <my_env_name>/bin/activate`
-9.  Install requirements (`requirements.txt`) for Intuit API Tool.
+9.  Install requirements (`requirements.txt`).
     - `pip install -r requirements.txt`
 10. Install latest version of `py2app`.
     - `pip install py2app`
